@@ -50,6 +50,36 @@ impl Game {
         }   
         total_kills
     }
+    fn validate(&self) -> Result<(), String> {
+        // Validate that each team has exactly 5 players and one player for each role
+        for team in [Team::Blue, Team::Red] {
+            let p_count = self.performances.iter().filter(|p| p.team == team).count();
+            if p_count != 5 {
+                return Err(format!("Team {:?} has {} players, expected 5.", team, p_count));
+            }
+            for role in [Role::Top, Role::Jungle, Role::Mid, Role::Bot, Role::Support] {
+                let r_count = self.performances.iter().filter(|p| p.team == team && p.role == role).count();
+                if r_count != 1 {
+                    return Err(format!("Team {:?} has {} players in role {:?}, expected 1.", team, r_count, role));
+                }
+            }
+        }
+        // Validate that each player is unique by name
+        let mut names = std::collections::HashSet::new();
+        for performance in &self.performances {
+            if !names.insert(&performance.name) {
+                return Err(format!("Duplicate player name found: {}", performance.name));
+            }
+        }
+        // Validate that kills + assists do not exceed total team kills
+        for performance in &self.performances {
+            let team_kills = self.team_kills(performance.team);
+            if performance.kills + performance.assists > team_kills {
+                return Err(format!("Player {} has kills + assists ({}) exceeding team kills ({}).", performance.name, performance.kills + performance.assists, team_kills));
+            }
+        }
+        Ok(())
+    }
 }
 
 
@@ -92,5 +122,10 @@ fn main() {
     for performance in &game.performances {
         let team_kills = game.team_kills(performance.team);
         println!("Player: {}, KDA: {:.2}, KP: {:.2}%", performance.name, performance.kda(), performance.kp(team_kills) * 100.0);
+    }
+
+    match game.validate() {
+        Ok(_) => println!("Game data is valid."),
+        Err(e) => println!("Game data validation error: {}", e),
     }
 }
