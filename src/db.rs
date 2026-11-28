@@ -60,3 +60,61 @@ pub async fn connect(path: &str) -> Result<SqlitePool, sqlx::Error> {
 
     Ok(pool)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    async fn test_db() -> (TempDir, SqlitePool) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.db");
+        let pool = connect(path.to_str().unwrap()).await.unwrap();
+        (dir, pool)
+    }
+
+    #[tokio::test]
+    async fn adds_and_lists_player() {
+        let (_dir, pool) = test_db().await;
+
+        // add a player, list the players, then check the results
+        let riot_id = "player1#yes";
+        let seed_lp = Some(100);
+        let player_id = add_player(&pool, riot_id, seed_lp).await.unwrap();
+        let players = list_players(&pool).await.unwrap();
+        assert_eq!(players.len(), 1);
+        let player = &players[0];
+        assert_eq!(player.id, player_id);
+        assert_eq!(player.riot_id, riot_id);
+        assert_eq!(player.seed_lp, seed_lp);
+    }
+
+    #[tokio::test]
+    async fn unranked_player() {
+        let (_dir, pool) = test_db().await;
+
+        // add a player with no seed_lp, list the players, then check the results
+        let riot_id = "player2#hello";
+        let seed_lp = None;
+        let player_id = add_player(&pool, riot_id, seed_lp).await.unwrap();
+        let players = list_players(&pool).await.unwrap();
+        assert_eq!(players.len(), 1);
+        let player = &players[0];
+        assert_eq!(player.id, player_id);
+        assert_eq!(player.riot_id, riot_id);
+        assert_eq!(player.seed_lp, seed_lp);
+    }
+
+    #[tokio::test]
+    async fn duplicate_player() {
+        let (_dir, pool) = test_db().await;
+
+        // add a player, then try to add the same player again and check for an error
+        let riot_id = "player1#yes";
+        let dup_id = "PLAYER1#YES"; // test case-insensitivity
+        let seed_lp = Some(100);
+        let _player_id = add_player(&pool, riot_id, seed_lp).await.unwrap();
+        let result = add_player(&pool, dup_id, seed_lp).await;
+        assert!(result.is_err());
+    }
+}
