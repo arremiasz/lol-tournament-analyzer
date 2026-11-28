@@ -1,7 +1,13 @@
+mod db;
 mod game;
 
+use db::add_player;
 use game::{Game, PlayerPerformance, Role, Team};
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
+
+use sqlx::{
+    pool,
+    sqlite::{SqliteConnectOptions, SqlitePool},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -24,6 +30,13 @@ async fn main() -> Result<(), sqlx::Error> {
     .await?;
 
     println!("Database ready.");
+
+    // Example usage of adding players
+    let player1_id = add_player(&pool, "player1#yes", Some(100)).await?;
+    let player2_id = add_player(&pool, "Player2#yes", None).await?;
+    // Print the IDs of the added players
+    println!("Added player1 with ID: {}", player1_id);
+    println!("Added player2 with ID: {}", player2_id);
 
     let player1 = PlayerPerformance {
         name: String::from("Alex"),
