@@ -2,9 +2,9 @@ use sqlx::Row;
 use sqlx::sqlite::SqlitePool;
 
 pub struct Player {
-    id: i64,
-    riot_id: String,
-    seed_lp: Option<u32>,
+    pub id: i64,
+    pub riot_id: String,
+    pub seed_lp: Option<u32>,
 }
 
 pub async fn add_player(

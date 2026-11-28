@@ -1,6 +1,7 @@
 mod db;
 mod game;
 mod rank;
+mod register;
 
 use db::add_player;
 use game::{Game, PlayerPerformance, Role, Team};
