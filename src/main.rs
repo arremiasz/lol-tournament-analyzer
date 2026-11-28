@@ -1,8 +1,30 @@
 mod game;
 
 use game::{Game, PlayerPerformance, Role, Team};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool};
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), sqlx::Error> {
+    let options = SqliteConnectOptions::new()
+        .filename("tracker.db")
+        .create_if_missing(true);
+
+    let pool = SqlitePool::connect_with(options).await?;
+
+    sqlx::query(
+        "
+        CREATE TABLE IF NOT EXISTS players (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            riot_id TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            seed_lp INTEGER CHECK(seed_lp >= 0)
+        );
+        ",
+    )
+    .execute(&pool)
+    .await?;
+
+    println!("Database ready.");
+
     let player1 = PlayerPerformance {
         name: String::from("Alex"),
         role: Role::Mid,
@@ -54,4 +76,6 @@ fn main() {
         Ok(_) => println!("Game data is valid."),
         Err(e) => println!("Game data validation error: {}", e),
     }
+
+    Ok(())
 }

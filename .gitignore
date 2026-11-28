@@ -28,3 +28,6 @@ rustc-ice-*.txt
 
 /target
 .env
+*.db
+*.db-*
+*.db3
