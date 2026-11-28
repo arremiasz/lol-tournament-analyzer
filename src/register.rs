@@ -15,7 +15,6 @@ pub async fn register_player(
     riot_id: &str,
     rank_input: Option<&str>,
 ) -> Result<i64, RegisterError> {
-    // riot_id validation: must be in the format "name#tag" and not empty, with text on both sides of the '#'
     if riot_id.split_once('#').map_or(true, |(name, tag)| {
         name.trim().is_empty() || tag.trim().is_empty()
     }) {
